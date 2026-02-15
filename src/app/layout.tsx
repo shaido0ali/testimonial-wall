@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { ThemeProvider } from "@/components/ThemeProvider"; 
 import "./globals.css";
 
 const geistSans = Geist({
@@ -12,13 +13,11 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// Professional SEO Metadata
 export const metadata: Metadata = {
   title: "Testimonial Wall | Modern Social Proof",
-  description: "Collect, manage, and display customer testimonials effortlessly in 2026.",
+  description: "Manage your social proof effortlessly.",
 };
 
-// Critical for Mobile UX: Prevents auto-zoom on input focus
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
@@ -28,15 +27,13 @@ export const viewport: Viewport = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className="scroll-smooth">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50 text-slate-900`}
-      >
-        {children}
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );
