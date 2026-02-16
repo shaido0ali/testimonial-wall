@@ -4,17 +4,21 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import EmbedCode from '@/components/EmbedCode';
 import CreateWall from '@/components/CreateWall';
+import StyleEditor from '@/components/StyleEditor';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import Link from 'next/link';
 import { 
   LayoutDashboard, 
   ExternalLink, 
   Loader2, 
   LogOut, 
   Trash2, 
-  MapPin,
   Star,
   Settings,
-  ShieldCheck
+  ShieldCheck,
+  Plus,
+  Eye,
+  PenLine
 } from 'lucide-react';
 
 interface Testimonial { 
@@ -38,7 +42,6 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const hasFetched = useRef(false);
 
-  // Auth Guard
   useEffect(() => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -52,7 +55,6 @@ export default function Dashboard() {
     if (!user) return;
 
     setLoading(true);
-    
     const { data: wallsData } = await supabase
       .from('walls')
       .select('*')
@@ -125,22 +127,15 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-app-bg text-app-fg transition-colors duration-300">
-      
-      {/* Sticky Navigation */}
       <nav className="sticky top-0 z-40 w-full bg-app-bg/80 backdrop-blur-md border-b border-app-border">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <LayoutDashboard className="text-blue-600" size={24} />
             <span className="font-black text-xl tracking-tighter">TestimonialWall</span>
           </div>
-          
           <div className="flex items-center gap-4">
             <ThemeToggle />
-            <button 
-              onClick={handleSignOut} 
-              className="p-2 text-app-muted hover:text-red-500 transition-colors"
-              title="Sign Out"
-            >
+            <button onClick={handleSignOut} className="p-2 text-app-muted hover:text-red-500 transition-colors">
               <LogOut size={20} />
             </button>
           </div>
@@ -148,8 +143,6 @@ export default function Dashboard() {
       </nav>
 
       <div className="max-w-6xl mx-auto p-4 md:p-8">
-        
-        {/* Dashboard Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-10 gap-6">
           <div>
             <h1 className="text-3xl md:text-5xl font-black tracking-tight mb-2">Dashboard</h1>
@@ -173,18 +166,20 @@ export default function Dashboard() {
               
               {/* Wall Header */}
               <div className="p-6 md:px-10 md:py-8 border-b border-app-border flex justify-between items-center bg-app-fg/[0.02]">
-                <div>
+                <div className="flex flex-col gap-1">
                   <div className="flex items-center gap-3">
                     <h2 className="text-xl md:text-2xl font-black tracking-tight">{wall.name}</h2>
-                    <span className="bg-blue-600 text-white text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-widest">Active</span>
+                    <span className="bg-green-500 text-white text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-widest">Live</span>
                   </div>
-                  <a 
-                    href={`/submit/${wall.slug}`} 
-                    target="_blank" 
-                    className="text-xs text-blue-600 font-bold mt-1 flex items-center gap-1 hover:underline"
-                  >
-                    Public Submission Page <ExternalLink size={12}/>
-                  </a>
+                  <div className="flex items-center gap-3">
+                    <Link href={`/wall/${wall.slug}`} target="_blank" className="text-[10px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-1 hover:opacity-70 transition-opacity">
+                      <Eye size={12} /> View Wall
+                    </Link>
+                    <span className="text-app-border">|</span>
+                    <Link href={`/submit/${wall.slug}`} target="_blank" className="text-[10px] font-black text-app-muted uppercase tracking-widest flex items-center gap-1 hover:text-app-fg transition-colors">
+                      <PenLine size={12} /> Submission Link
+                    </Link>
+                  </div>
                 </div>
                 <button 
                   onClick={() => deleteWall(wall.id)} 
@@ -196,8 +191,27 @@ export default function Dashboard() {
 
               <div className="p-6 md:p-10 grid grid-cols-1 lg:grid-cols-3 gap-12">
                 
-                {/* Left Column: Config */}
+                {/* Left Column: Config & Live Preview */}
                 <div className="space-y-8">
+                  {/* LIVE PREVIEW SECTION */}
+                  <section className="bg-app-bg rounded-3xl p-5 border border-app-border">
+                    <h3 className="text-[10px] font-black text-app-muted uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                      <LayoutDashboard size={14} /> Live Wall Preview
+                    </h3>
+                    <div className="aspect-video bg-app-card rounded-2xl border border-app-border overflow-hidden relative group/preview shadow-inner">
+                      <iframe 
+                        src={`/wall/${wall.slug}`} 
+                        className="w-[300%] h-[300%] origin-top-left scale-[0.333] pointer-events-none opacity-80"
+                        title="Wall Preview"
+                      />
+                      <div className="absolute inset-0 bg-transparent flex items-center justify-center group-hover/preview:bg-black/5 transition-colors">
+                        <Link href={`/wall/${wall.slug}`} target="_blank" className="opacity-0 group-hover/preview:opacity-100 bg-white text-black text-[9px] font-black px-4 py-2 rounded-full shadow-2xl flex items-center gap-2 transition-all">
+                          Open Full Wall <ExternalLink size={10} />
+                        </Link>
+                      </div>
+                    </div>
+                  </section>
+
                   <section>
                     <h3 className="text-[10px] font-black text-app-muted uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                       <Settings size={14} /> Embed Widget
@@ -231,7 +245,7 @@ export default function Dashboard() {
                                 <span className="text-[10px] font-black ml-1">{t.rating}</span>
                               </div>
                               {t.is_approved && (
-                                <span className="bg-green-500/10 text-green-600 text-[8px] font-black uppercase px-2 py-0.5 rounded-md">Live</span>
+                                <span className="bg-green-500/10 text-green-600 text-[8px] font-black uppercase px-2 py-0.5 rounded-md tracking-tighter">Approved</span>
                               )}
                             </div>
                             <p className="text-sm text-app-muted leading-relaxed italic line-clamp-3">"{t.content}"</p>
@@ -246,7 +260,7 @@ export default function Dashboard() {
                                 : 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-600/20'
                               }`}
                             >
-                              {t.is_approved ? 'Hide Review' : 'Approve'}
+                              {t.is_approved ? 'Hide' : 'Approve'}
                             </button>
                             <button 
                               onClick={() => deleteTestimonial(t.id)} 

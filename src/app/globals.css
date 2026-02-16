@@ -23,6 +23,8 @@
   --color-app-card: var(--card);
   --color-app-border: var(--border);
   --color-app-muted: var(--muted);
+  --color-widget-accent: var(--w-accent, #2563eb);
+  --color-widget-radius: var(--w-radius, 1rem);
 }
 
 @layer base {
