@@ -15,7 +15,6 @@ import {
   Trash2, 
   Star,
   Settings,
-  ShieldCheck,
   Plus,
   Eye,
   PenLine
@@ -34,12 +33,14 @@ interface Wall {
   id: string; 
   name: string; 
   slug: string; 
+  settings?: any; // Added settings to the interface
 }
 
 export default function Dashboard() {
   const [walls, setWalls] = useState<Wall[]>([]);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0); // For forcing preview refreshes
   const hasFetched = useRef(false);
 
   useEffect(() => {
@@ -75,6 +76,12 @@ export default function Dashboard() {
     }
     setLoading(false);
   }, []);
+
+  // Function to refresh UI when settings change
+  const handleStyleUpdate = () => {
+    fetchData();
+    setRefreshKey(prev => prev + 1); // Triggers iframe reload
+  };
 
   useEffect(() => {
     if (!hasFetched.current) {
@@ -113,6 +120,7 @@ export default function Dashboard() {
       setTestimonials(prev => prev.map(t => 
         t.id === id ? { ...t, is_approved: !currentStatus } : t
       ));
+      setRefreshKey(prev => prev + 1); // Refresh preview to show/hide approved review
     }
   };
 
@@ -164,7 +172,6 @@ export default function Dashboard() {
           walls.map(wall => (
             <div key={wall.id} className="bg-app-card rounded-[2.5rem] border border-app-border mb-12 overflow-hidden shadow-sm group/wall transition-all hover:shadow-xl hover:shadow-blue-600/5">
               
-              {/* Wall Header */}
               <div className="p-6 md:px-10 md:py-8 border-b border-app-border flex justify-between items-center bg-app-fg/[0.02]">
                 <div className="flex flex-col gap-1">
                   <div className="flex items-center gap-3">
@@ -191,25 +198,28 @@ export default function Dashboard() {
 
               <div className="p-6 md:p-10 grid grid-cols-1 lg:grid-cols-3 gap-12">
                 
-                {/* Left Column: Config & Live Preview */}
+                {/* Left Column: Config & Style */}
                 <div className="space-y-8">
-                  {/* LIVE PREVIEW SECTION */}
                   <section className="bg-app-bg rounded-3xl p-5 border border-app-border">
                     <h3 className="text-[10px] font-black text-app-muted uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                       <LayoutDashboard size={14} /> Live Wall Preview
                     </h3>
                     <div className="aspect-video bg-app-card rounded-2xl border border-app-border overflow-hidden relative group/preview shadow-inner">
                       <iframe 
+                        key={refreshKey} // Forces iframe to reload when styles are saved
                         src={`/wall/${wall.slug}`} 
-                        className="w-[300%] h-[300%] origin-top-left scale-[0.333] pointer-events-none opacity-80"
+                        className="w-[300%] h-[300%] origin-top-left scale-[0.333] pointer-events-none opacity-90"
                         title="Wall Preview"
                       />
-                      <div className="absolute inset-0 bg-transparent flex items-center justify-center group-hover/preview:bg-black/5 transition-colors">
-                        <Link href={`/wall/${wall.slug}`} target="_blank" className="opacity-0 group-hover/preview:opacity-100 bg-white text-black text-[9px] font-black px-4 py-2 rounded-full shadow-2xl flex items-center gap-2 transition-all">
-                          Open Full Wall <ExternalLink size={10} />
-                        </Link>
-                      </div>
                     </div>
+                  </section>
+
+                  <section>
+                    <StyleEditor 
+                      wallId={wall.id} 
+                      initialSettings={wall.settings} 
+                      onUpdate={handleStyleUpdate} 
+                    />
                   </section>
 
                   <section>
