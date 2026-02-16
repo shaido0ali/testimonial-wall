@@ -15,19 +15,22 @@ interface Testimonial {
 export default function Widget({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [settings, setSettings] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchApprovedTestimonials() {
-      // 1. Get the wall ID first via the slug
+    async function fetchWidgetData() {
+      // 1. Get the wall settings AND id via the slug
       const { data: wall } = await supabase
         .from('walls')
-        .select('id')
+        .select('id, settings')
         .eq('slug', slug)
         .single();
 
       if (wall) {
-        // 2. Fetch only APPROVED testimonials for this wall
+        setSettings(wall.settings);
+
+        // 2. Fetch only APPROVED testimonials
         const { data } = await supabase
           .from('testimonials')
           .select('id, author_name, author_role, content, rating')
@@ -39,46 +42,67 @@ export default function Widget({ params }: { params: Promise<{ slug: string }> }
       }
       setLoading(false);
     }
-    fetchApprovedTestimonials();
+    fetchWidgetData();
   }, [slug]);
 
   if (loading) return (
-    <div className="flex items-center justify-center p-10">
+    <div className="flex items-center justify-center min-h-[200px]">
       <Loader2 className="animate-spin text-blue-500" />
     </div>
   );
 
-  if (testimonials.length === 0) return null; // Hide the widget if nothing is approved
+  if (testimonials.length === 0) return null;
+
+  // Use settings from DB or fallback to defaults
+  const theme = settings?.theme || 'light';
+  const accentColor = settings?.accent_color || '#2563eb';
+  const borderRadius = settings?.border_radius || '1rem';
+  const isDark = theme === 'dark';
 
   return (
-    <div className="bg-transparent p-4 font-sans text-black">
+    <div className={`bg-transparent p-4 font-sans ${isDark ? 'dark' : ''}`}>
       <div className="columns-1 md:columns-2 lg:columns-3 gap-4 space-y-4">
         {testimonials.map((t) => (
           <div 
             key={t.id} 
-            className="break-inside-avoid bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300"
+            className={`break-inside-avoid p-6 shadow-sm border transition-all duration-300 group hover:shadow-md ${
+              isDark 
+                ? 'bg-[#171717] border-[#262626] text-white' 
+                : 'bg-white border-gray-100 text-gray-900'
+            }`}
+            style={{ borderRadius: borderRadius }}
           >
+            {/* Dynamic Star Rating */}
             <div className="flex items-center gap-1 mb-3">
               {[...Array(5)].map((_, i) => (
                 <Star 
                   key={i} 
                   size={14} 
-                  className={i < t.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-200"} 
+                  style={{ 
+                    color: i < t.rating ? accentColor : (isDark ? '#262626' : '#E5E7EB'),
+                    fill: i < t.rating ? accentColor : 'transparent'
+                  }} 
                 />
               ))}
             </div>
 
+            {/* Content with Dynamic Quote Icon */}
             <div className="relative">
-              <Quote className="absolute -top-2 -left-2 text-blue-50 opacity-20" size={40} />
-              <p className="text-gray-700 leading-relaxed relative z-10 text-sm italic">
+              <Quote 
+                className="absolute -top-2 -left-2 opacity-10" 
+                size={40} 
+                style={{ color: accentColor }} 
+              />
+              <p className={`${isDark ? 'text-gray-300' : 'text-gray-700'} leading-relaxed relative z-10 text-sm italic`}>
                 "{t.content}"
               </p>
             </div>
 
-            <div className="mt-4 pt-4 border-t border-gray-50">
-              <p className="font-bold text-gray-900 text-sm">{t.author_name}</p>
+            {/* Author Section */}
+            <div className={`mt-4 pt-4 border-t ${isDark ? 'border-[#262626]' : 'border-gray-50'}`}>
+              <p className="font-bold text-sm">{t.author_name}</p>
               {t.author_role && (
-                <p className="text-xs text-gray-400 font-medium mt-0.5 uppercase tracking-wide">
+                <p className={`${isDark ? 'text-gray-500' : 'text-gray-400'} text-xs font-medium mt-0.5 uppercase tracking-wide`}>
                   {t.author_role}
                 </p>
               )}

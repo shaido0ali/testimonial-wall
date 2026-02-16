@@ -8,6 +8,11 @@ import Link from 'next/link';
 interface Wall {
   id: string;
   name: string;
+  settings: {
+    theme: 'light' | 'dark';
+    accent_color: string;
+    border_radius: string;
+  };
 }
 
 export default function SubmitTestimonial({ params }: { params: Promise<{ slug: string }> }) {
@@ -29,7 +34,7 @@ export default function SubmitTestimonial({ params }: { params: Promise<{ slug: 
     async function fetchWall() {
       const { data } = await supabase
         .from('walls')
-        .select('id, name')
+        .select('id, name, settings')
         .eq('slug', slug)
         .single();
 
@@ -65,6 +70,11 @@ export default function SubmitTestimonial({ params }: { params: Promise<{ slug: 
     setSubmitting(false);
   };
 
+  // Helper for dynamic styles
+  const isDark = wall?.settings?.theme === 'dark';
+  const accentColor = wall?.settings?.accent_color || '#2563eb';
+  const borderRadius = wall?.settings?.border_radius || '1.5rem';
+
   if (loading) return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-white">
       <Loader2 className="animate-spin text-blue-600 mb-4" size={40} />
@@ -73,14 +83,14 @@ export default function SubmitTestimonial({ params }: { params: Promise<{ slug: 
   );
 
   if (!wall) return (
-    <div className="min-h-screen flex items-center justify-center bg-white p-4 text-center">
+    <div className={`min-h-screen flex items-center justify-center p-4 text-center ${isDark ? 'bg-[#0A0A0A]' : 'bg-white'}`}>
       <div className="max-w-md">
-        <div className="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
+        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 ${isDark ? 'bg-red-950/30 text-red-400' : 'bg-red-50 text-red-500'}`}>
           <MessageSquareQuote size={32} />
         </div>
-        <h1 className="text-2xl font-black text-gray-900 mb-2">Wall Not Found</h1>
+        <h1 className={`text-2xl font-black mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>Wall Not Found</h1>
         <p className="text-gray-500 font-medium mb-8">This link might have expired or the wall was deleted.</p>
-        <Link href="/" className="text-sm font-bold text-blue-600 hover:underline flex items-center justify-center gap-2">
+        <Link href="/" className="text-sm font-bold hover:underline flex items-center justify-center gap-2" style={{ color: accentColor }}>
            <ArrowLeft size={16} /> Back to Home
         </Link>
       </div>
@@ -88,24 +98,27 @@ export default function SubmitTestimonial({ params }: { params: Promise<{ slug: 
   );
 
   if (submitted) return (
-    <div className="min-h-screen flex items-center justify-center bg-white p-4 text-center">
+    <div className={`min-h-screen flex items-center justify-center p-4 text-center ${isDark ? 'bg-[#0A0A0A]' : 'bg-white'}`}>
       <div className="max-w-sm w-full space-y-8 animate-in fade-in zoom-in duration-500">
         <div className="relative inline-block">
-          <div className="bg-green-100 w-24 h-24 rounded-[2.5rem] flex items-center justify-center mx-auto relative z-10">
-            <CheckCircle2 className="text-green-600" size={48} />
+          <div className="w-24 h-24 flex items-center justify-center mx-auto relative z-10" 
+               style={{ backgroundColor: `${accentColor}20`, borderRadius: borderRadius }}>
+            <CheckCircle2 style={{ color: accentColor }} size={48} />
           </div>
-          <div className="absolute inset-0 bg-green-200 rounded-[2.5rem] blur-2xl opacity-50 animate-pulse" />
+          <div className="absolute inset-0 blur-2xl opacity-30 animate-pulse" 
+               style={{ backgroundColor: accentColor, borderRadius: borderRadius }} />
         </div>
         <div>
-          <h1 className="text-4xl font-black text-gray-900 mb-3 tracking-tighter">Review Sent!</h1>
+          <h1 className={`text-4xl font-black mb-3 tracking-tighter ${isDark ? 'text-white' : 'text-gray-900'}`}>Review Sent!</h1>
           <p className="text-gray-500 font-medium leading-relaxed">
-            Thanks for sharing your story with <span className="text-black font-bold">{wall.name}</span>. 
+            Thanks for sharing your story with <span className={isDark ? 'text-gray-200' : 'text-black'}>{wall.name}</span>. 
             Once approved, it will be live on our Wall of Love.
           </p>
         </div>
         <button 
           onClick={() => setSubmitted(false)}
-          className="w-full bg-gray-900 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-black transition-all shadow-xl shadow-gray-200"
+          className="w-full text-white py-4 font-black text-xs uppercase tracking-widest hover:brightness-110 transition-all shadow-xl"
+          style={{ backgroundColor: accentColor, borderRadius: borderRadius }}
         >
           Write Another Review
         </button>
@@ -114,16 +127,16 @@ export default function SubmitTestimonial({ params }: { params: Promise<{ slug: 
   );
 
   return (
-    <div className="min-h-screen bg-[#FDFDFF] py-12 md:py-20 px-4 md:px-6">
+    <div className={`min-h-screen py-12 md:py-20 px-4 md:px-6 transition-colors duration-300 ${isDark ? 'bg-[#0A0A0A]' : 'bg-[#FDFDFF]'}`}>
       <div className="max-w-xl mx-auto">
         
         {/* Header */}
         <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 bg-blue-600/5 text-blue-600 px-4 py-2 rounded-full mb-6">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6" style={{ backgroundColor: `${accentColor}15`, color: accentColor }}>
             <Star size={14} className="fill-current" />
             <span className="text-[10px] font-black uppercase tracking-widest">Customer Feedback</span>
           </div>
-          <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tighter mb-4">
+          <h1 className={`text-4xl md:text-5xl font-black tracking-tighter mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
             {wall.name}
           </h1>
           <p className="text-gray-500 font-medium text-lg italic">
@@ -131,7 +144,11 @@ export default function SubmitTestimonial({ params }: { params: Promise<{ slug: 
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-white rounded-[3rem] shadow-2xl shadow-blue-900/5 border border-gray-100 p-8 md:p-12 space-y-10">
+        <form 
+          onSubmit={handleSubmit} 
+          className={`shadow-2xl border transition-all p-8 md:p-12 space-y-10 ${isDark ? 'bg-[#171717] border-[#262626] shadow-black/50' : 'bg-white border-gray-100 shadow-blue-900/5'}`}
+          style={{ borderRadius: `calc(${borderRadius} * 1.5)` }}
+        >
           
           {/* Rating */}
           <div className="space-y-4">
@@ -146,11 +163,12 @@ export default function SubmitTestimonial({ params }: { params: Promise<{ slug: 
                 >
                   <Star 
                     size={40} 
-                    className={`transition-all duration-300 ${
-                      star <= formData.rating 
-                      ? "fill-yellow-400 text-yellow-400 drop-shadow-[0_0_10px_rgba(250,204,21,0.4)]" 
-                      : "text-gray-100 group-hover:text-gray-200"
-                    }`} 
+                    className="transition-all duration-300"
+                    style={{ 
+                      fill: star <= formData.rating ? accentColor : 'transparent',
+                      color: star <= formData.rating ? accentColor : (isDark ? '#333' : '#F3F4F6'),
+                      filter: star <= formData.rating ? `drop-shadow(0 0 8px ${accentColor}60)` : 'none'
+                    }} 
                   />
                 </button>
               ))}
@@ -166,7 +184,8 @@ export default function SubmitTestimonial({ params }: { params: Promise<{ slug: 
                   required
                   type="text"
                   placeholder="Your name"
-                  className="w-full p-5 bg-gray-50 border-2 border-transparent focus:border-blue-600 focus:bg-white rounded-[1.5rem] outline-none transition-all font-bold"
+                  className={`w-full p-5 border-2 border-transparent focus:bg-transparent outline-none transition-all font-bold ${isDark ? 'bg-[#222] text-white focus:border-blue-500' : 'bg-gray-50 text-gray-900 focus:border-blue-600'}`}
+                  style={{ borderRadius, borderColor: isDark ? '#333' : 'transparent' }}
                   value={formData.author_name}
                   onChange={(e) => setFormData({ ...formData, author_name: e.target.value })}
                 />
@@ -176,7 +195,8 @@ export default function SubmitTestimonial({ params }: { params: Promise<{ slug: 
                 <input
                   type="text"
                   placeholder="e.g. Founder at Acme"
-                  className="w-full p-5 bg-gray-50 border-2 border-transparent focus:border-blue-600 focus:bg-white rounded-[1.5rem] outline-none transition-all font-bold"
+                  className={`w-full p-5 border-2 border-transparent focus:bg-transparent outline-none transition-all font-bold ${isDark ? 'bg-[#222] text-white focus:border-blue-500' : 'bg-gray-50 text-gray-900 focus:border-blue-600'}`}
+                  style={{ borderRadius, borderColor: isDark ? '#333' : 'transparent' }}
                   value={formData.author_role}
                   onChange={(e) => setFormData({ ...formData, author_role: e.target.value })}
                 />
@@ -190,7 +210,8 @@ export default function SubmitTestimonial({ params }: { params: Promise<{ slug: 
                 required
                 rows={5}
                 placeholder="What was your experience like?"
-                className="w-full p-5 bg-gray-50 border-2 border-transparent focus:border-blue-600 focus:bg-white rounded-[1.5rem] outline-none transition-all font-medium resize-none"
+                className={`w-full p-5 border-2 border-transparent focus:bg-transparent outline-none transition-all font-medium resize-none ${isDark ? 'bg-[#222] text-white focus:border-blue-500' : 'bg-gray-50 text-gray-900 focus:border-blue-600'}`}
+                style={{ borderRadius, borderColor: isDark ? '#333' : 'transparent' }}
                 value={formData.content}
                 onChange={(e) => setFormData({ ...formData, content: e.target.value })}
               />
@@ -200,7 +221,8 @@ export default function SubmitTestimonial({ params }: { params: Promise<{ slug: 
           <button
             type="submit"
             disabled={submitting}
-            className="w-full bg-blue-600 text-white py-6 rounded-3xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-blue-700 active:scale-[0.97] transition-all shadow-2xl shadow-blue-600/30 disabled:opacity-50"
+            className="w-full text-white py-6 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 hover:brightness-110 active:scale-[0.97] transition-all disabled:opacity-50"
+            style={{ backgroundColor: accentColor, borderRadius: `calc(${borderRadius} * 1.5)`, boxShadow: `0 20px 40px ${accentColor}30` }}
           >
             {submitting ? (
               <Loader2 className="animate-spin" />
@@ -211,11 +233,11 @@ export default function SubmitTestimonial({ params }: { params: Promise<{ slug: 
         </form>
         
         <div className="mt-12 text-center opacity-30 flex items-center justify-center gap-4">
-          <div className="h-[1px] w-12 bg-gray-400" />
-          <p className="text-[9px] font-black text-gray-900 uppercase tracking-[0.4em]">
+          <div className={`h-[1px] w-12 ${isDark ? 'bg-gray-700' : 'bg-gray-400'}`} />
+          <p className={`text-[9px] font-black uppercase tracking-[0.4em] ${isDark ? 'text-gray-400' : 'text-gray-900'}`}>
             Verified by TestimonialWall
           </p>
-          <div className="h-[1px] w-12 bg-gray-400" />
+          <div className={`h-[1px] w-12 ${isDark ? 'bg-gray-700' : 'bg-gray-400'}`} />
         </div>
       </div>
     </div>

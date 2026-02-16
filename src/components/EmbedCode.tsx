@@ -1,33 +1,60 @@
 "use client";
 
-import { useState } from 'react';
-import { Copy, Check, Code2, Terminal } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Copy, Check, Code2, Terminal, Sparkles } from 'lucide-react';
 
 export default function EmbedCode({ slug }: { slug: string }) {
   const [copied, setCopied] = useState(false);
+  const [baseUrl, setBaseUrl] = useState('https://testimonialwall.com');
 
-  const codeSnippet = `<script 
-  src="https://testimonialwall.com/widget.js" 
-  data-wall="${slug}" 
-  defer
-></script>
-<div id="testimonial-wall"></div>`;
+  // Set the base URL only on the client to avoid hydration mismatch
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setBaseUrl(window.location.origin);
+    }
+  }, []);
+
+  const widgetUrl = `${baseUrl}/widget/${slug}`;
+
+  // This is the Smart Snippet that includes the resizing logic
+  const smartSnippet = `<div id="tw-root-${slug}"></div>
+<script>
+  (function() {
+    const container = document.getElementById('tw-root-${slug}');
+    const iframe = document.createElement('iframe');
+    iframe.src = "${widgetUrl}";
+    iframe.style.width = "100%";
+    iframe.style.border = "none";
+    iframe.style.overflow = "hidden";
+    iframe.style.background = "transparent";
+    iframe.scrolling = "no";
+    
+    // Listen for the height from the widget layout
+    window.addEventListener('message', function(e) {
+      if (e.data.type === 'resize' && e.origin === '${baseUrl}') {
+        iframe.style.height = e.data.height + 'px';
+      }
+    }, false);
+
+    container.appendChild(iframe);
+  })();
+</script>`;
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(codeSnippet);
+    navigator.clipboard.writeText(smartSnippet);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
   return (
     <div className="space-y-4">
-      <div className="bg-app-bg border border-app-border rounded-2xl overflow-hidden shadow-inner">
+      <div className="bg-app-bg border border-app-border rounded-2xl overflow-hidden shadow-sm">
         {/* Header / Tab Bar */}
         <div className="flex items-center justify-between px-4 py-2 border-b border-app-border bg-app-fg/[0.03]">
           <div className="flex items-center gap-2">
-            <Terminal size={14} className="text-app-muted" />
+            <Sparkles size={14} className="text-blue-500" />
             <span className="text-[10px] font-black uppercase tracking-widest text-app-muted">
-              HTML Snippet
+              Smart Auto-Resizing Snippet
             </span>
           </div>
           <button
@@ -49,15 +76,20 @@ export default function EmbedCode({ slug }: { slug: string }) {
         </div>
 
         {/* Code Block */}
-        <div className="p-5 overflow-x-auto font-mono text-xs leading-relaxed">
+        <div className="p-5 overflow-x-auto font-mono text-[11px] leading-relaxed bg-app-card/30">
           <pre className="text-app-fg/80">
-            <code className="language-html">
-              <span className="text-blue-500">&lt;script</span> <br />
-              &nbsp;&nbsp;src=<span className="text-green-600 dark:text-green-400">"https://testimonialwall.com/widget.js"</span> <br />
-              &nbsp;&nbsp;data-wall=<span className="text-green-600 dark:text-green-400">"{slug}"</span> <br />
-              &nbsp;&nbsp;defer <br />
-              <span className="text-blue-500">&gt;&lt;/script&gt;</span> <br />
-              <span className="text-blue-500">&lt;div</span> id=<span className="text-green-600 dark:text-green-400">"testimonial-wall"</span><span className="text-blue-500">&gt;&lt;/div&gt;</span>
+            <code>
+              <span className="text-gray-400">&lt;!-- Social Proof Widget --&gt;</span><br/>
+              <span className="text-blue-500">&lt;div</span> id="tw-root-{slug}"<span className="text-blue-500">&gt;&lt;/div&gt;</span><br/>
+              <span className="text-blue-500">&lt;script&gt;</span><br/>
+              &nbsp;&nbsp;(function() {'{'}<br/>
+              &nbsp;&nbsp;&nbsp;&nbsp;const container = document.getElementById('tw-root-{slug}');<br/>
+              &nbsp;&nbsp;&nbsp;&nbsp;const iframe = document.createElement('iframe');<br/>
+              &nbsp;&nbsp;&nbsp;&nbsp;iframe.src = <span className="text-green-600">"{widgetUrl}"</span>;<br/>
+              &nbsp;&nbsp;&nbsp;&nbsp;... (auto-resize logic) ...<br/>
+              &nbsp;&nbsp;&nbsp;&nbsp;container.appendChild(iframe);<br/>
+              &nbsp;&nbsp;{'}'})();<br/>
+              <span className="text-blue-500">&lt;/script&gt;</span>
             </code>
           </pre>
         </div>
@@ -68,7 +100,7 @@ export default function EmbedCode({ slug }: { slug: string }) {
           <Code2 size={12} className="text-blue-600" />
         </div>
         <p className="text-[10px] text-app-muted font-medium leading-normal">
-          Paste this snippet into the <code className="bg-app-fg/5 px-1 rounded">{"<body>"}</code> of your website where you want the wall to appear.
+          This script injects a transparent wall that <strong>automatically adjusts its height</strong>. No double scrollbars, no fixed heights.
         </p>
       </div>
     </div>
